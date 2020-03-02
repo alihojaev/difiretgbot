@@ -131,6 +131,12 @@ class diFireBot {
 
         private String handleAndGenerateResponseMessage(final String userChatId, final String consumeMessageText) {
             var currentState = userSessionMap.get(userChatId);
+            final var keyboard = new ArrayList<KeyboardRow>();
+            final var keyboardRow = new KeyboardRow();
+
+            replyKeyboardMarkup.setSelective(true);
+            replyKeyboardMarkup.setResizeKeyboard(true);
+            replyKeyboardMarkup.setOneTimeKeyboard(true);
             if (this.admins.contains(userChatId)) {
                 if (consumeMessageText.equals("/users")) {
                     return this.getUsers();
@@ -141,19 +147,10 @@ class diFireBot {
                     return "Вы уже зарегистрированы";
                 }
                 userSessionMap.put(userChatId, Steps.START);
-                final var keyboard = new ArrayList<KeyboardRow>();
-                final var keyboardRow = new KeyboardRow();
-
-                replyKeyboardMarkup.setSelective(true);
-                replyKeyboardMarkup.setResizeKeyboard(true);
-                replyKeyboardMarkup.setOneTimeKeyboard(true);
 
                 this.courseList.forEach(keyboardRow::add);
                 keyboard.add(keyboardRow);
                 replyKeyboardMarkup.setKeyboard(keyboard);
-
-                keyboard.clear();
-                keyboardRow.clear();
 
                 return "Здравствуйте, на какой курс вы хотите записаться? \n" +
                         "> SMM-больше, чем Инстаграм \n" +
@@ -165,6 +162,8 @@ class diFireBot {
                     if (this.courseList.contains(consumeMessageText)) {
                         try {
                             this.userSessionMap.put(userChatId, Steps.COURSE);
+                            keyboard.clear();
+                            keyboardRow.clear();
                             final var dbTemplate = new DBTemplate();
                             dbTemplate.setUserChatId(userChatId);
                             dbTemplate.setCourse(consumeMessageText);
