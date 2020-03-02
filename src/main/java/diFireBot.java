@@ -108,7 +108,9 @@ class diFireBot {
                 final var userChatId = consumeMessage.getChatId().toString();
                 SendMessage sendMessage = null;
 
-                System.out.println(update);
+                System.out.println(update.getMessage().getForwardSenderName());
+                System.out.println(update.getMessage().getForwardFromChat());
+                System.out.println(update.getMessage().getForwardFrom());
 
                 if (this.courseList.contains(consumeMessageText) || !consumeMessageText.isEmpty()) {
                     sendMessage = new SendMessage()
@@ -137,6 +139,13 @@ class diFireBot {
 
         private String handleAndGenerateResponseMessage(final String userChatId, final String consumeMessageText) {
             var currentState = userSessionMap.get(userChatId);
+            final var keyboard = new ArrayList<KeyboardRow>();
+            final var keyboardRow = new KeyboardRow();
+
+            replyKeyboardMarkup.setSelective(true);
+            replyKeyboardMarkup.setResizeKeyboard(true);
+            replyKeyboardMarkup.setOneTimeKeyboard(false);
+
             if (admins.contains(userChatId)) {
                 if (consumeMessageText.equals("/users")) {
                     return this.getUsers();
@@ -147,27 +156,14 @@ class diFireBot {
                     return "Вы уже зарегестрированы";
                 }
                 userSessionMap.put(userChatId, Steps.START);
-                final var keyboard = new ArrayList<KeyboardRow>();
-                final var keyboardRow = new KeyboardRow();
 
-                replyKeyboardMarkup.setSelective(true);
-                replyKeyboardMarkup.setResizeKeyboard(true);
-                replyKeyboardMarkup.setOneTimeKeyboard(false);
 
                 this.courseList.forEach(keyboardRow::add);
                 keyboard.add(keyboardRow);
                 replyKeyboardMarkup.setKeyboard(keyboard);
                 return "Здравствуйте, на какой курс вы хотите записаться?";
-            }
-            if (!consumeMessageText.equals("/start")) {
+            } else {
                 System.out.println("удалил я эти ебанные кнопки");
-                final var keyboard = new ArrayList<KeyboardRow>();
-                final var keyboardRow = new KeyboardRow();
-                replyKeyboardMarkup.setSelective(false);
-                replyKeyboardMarkup.setResizeKeyboard(false);
-                replyKeyboardMarkup.setOneTimeKeyboard(false);
-                keyboard.add(keyboardRow);
-                replyKeyboardMarkup.setKeyboard(keyboard);
                 keyboard.clear();
                 keyboardRow.clear();
             }
