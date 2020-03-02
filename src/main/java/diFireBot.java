@@ -196,16 +196,14 @@ class diFireBot {
                 case FULL_NAME: {
                     this.updateDbTemplate(userChatId, consumeMessageText, Steps.FULL_NAME);
                     this.userSessionMap.remove(userChatId);
-                    admins.forEach(admins -> {
-                        try {
-                            this.execute(new SendMessage()
-                                    .setChatId(admins)
-                                    .setText(this.getUsers()));
-                        } catch (TelegramApiException e) {
-                            e.printStackTrace();
-                            throw new RuntimeException("loh pidr");
-                        }
-                    });
+                    try {
+                        this.execute(new SendMessage()
+                                .setChatId("186164861")
+                                .setText(this.getUsers()));
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                        throw new RuntimeException("loh pidr");
+                    }
                     return "Вы зарегестрированы на курс";
                 }
                 default:
