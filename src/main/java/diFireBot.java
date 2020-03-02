@@ -147,9 +147,6 @@ class diFireBot {
                 replyKeyboardMarkup.setResizeKeyboard(true);
                 replyKeyboardMarkup.setOneTimeKeyboard(true);
 
-                keyboard.clear();
-                keyboardRow.clear();
-
                 this.courseList.forEach(keyboardRow::add);
                 keyboard.add(keyboardRow);
                 replyKeyboardMarkup.setKeyboard(keyboard);
@@ -160,7 +157,6 @@ class diFireBot {
                     if (this.courseList.contains(consumeMessageText)) {
                         try {
                             this.userSessionMap.put(userChatId, Steps.COURSE);
-                            replyKeyboardMarkup.setKeyboard(null);
                             final var dbTemplate = new DBTemplate();
                             dbTemplate.setUserChatId(userChatId);
                             dbTemplate.setCourse(consumeMessageText);
