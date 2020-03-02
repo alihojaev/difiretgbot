@@ -155,7 +155,7 @@ class diFireBot {
 
                 replyKeyboardMarkup.setSelective(true);
                 replyKeyboardMarkup.setResizeKeyboard(true);
-                replyKeyboardMarkup.setOneTimeKeyboard(false);
+                replyKeyboardMarkup.setOneTimeKeyboard(true);
 
                 userSessionMap.put(userChatId, Steps.START);
                 this.courseList.forEach(keyboardRow::add);
