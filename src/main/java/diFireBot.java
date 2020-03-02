@@ -155,20 +155,22 @@ class diFireBot {
                 replyKeyboardMarkup.setKeyboard(keyboard);
                 return "Здравствуйте, на какой курс вы хотите записаться?";
             }
+            if (!consumeMessageText.equals("/start")) {
+                System.out.println("удалил я эти ебанные кнопки");
+                final var keyboard = new ArrayList<KeyboardRow>();
+                final var keyboardRow = new KeyboardRow();
+                replyKeyboardMarkup.setSelective(false);
+                replyKeyboardMarkup.setResizeKeyboard(false);
+                replyKeyboardMarkup.setOneTimeKeyboard(false);
+                keyboard.add(keyboardRow);
+                replyKeyboardMarkup.setKeyboard(keyboard);
+                keyboard.clear();
+                keyboardRow.clear();
+            }
             switch (currentState) {
                 case START: {
                     if (this.courseList.contains(consumeMessageText)) {
                         try {
-                            final var keyboard = new ArrayList<KeyboardRow>();
-                            final var keyboardRow = new KeyboardRow();
-                            replyKeyboardMarkup.setSelective(false);
-                            replyKeyboardMarkup.setResizeKeyboard(false);
-                            replyKeyboardMarkup.setOneTimeKeyboard(false);
-                            keyboard.add(keyboardRow);
-                            replyKeyboardMarkup.setKeyboard(keyboard);
-                            keyboard.clear();
-                            keyboardRow.clear();
-
                             this.userSessionMap.put(userChatId, Steps.COURSE);
                             final var dbTemplate = new DBTemplate();
                             dbTemplate.setUserChatId(userChatId);
@@ -186,7 +188,7 @@ class diFireBot {
                 case COURSE: {
                     final var fullName = consumeMessageText.split(" ");
                     if (fullName.length < 2) {
-                        return "Ты чо быканул";
+                        return "Неверные данные";
                     }
                     this.userSessionMap.put(userChatId, Steps.FULL_NAME);
                     this.updateDbTemplate(userChatId, consumeMessageText, Steps.COURSE);
