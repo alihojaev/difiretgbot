@@ -87,8 +87,8 @@ class diFireBot {
 
         private List<String> getCourses() {
             final List<String> courses = new ArrayList<>();
-            courses.add("SMM-больше, чем Инстаграм");
-            courses.add("Курс мобильной фотографии");
+            courses.add("smm-больше, чем инстаграм");
+            courses.add("курс мобильной фотографии");
             return courses;
         }
 
@@ -106,7 +106,7 @@ class diFireBot {
                 final var consumeMessageText = consumeMessage.getText();
                 final var userChatId = consumeMessage.getChatId().toString();
                 SendMessage sendMessage = null;
-                if (this.courseList.contains(consumeMessageText) || !consumeMessageText.isEmpty()) {
+                if (this.courseList.contains(consumeMessageText.toLowerCase()) || !consumeMessageText.isEmpty()) {
                     sendMessage = new SendMessage()
                             .setChatId(userChatId)
                             .setText(this.handleAndGenerateResponseMessage(userChatId, consumeMessageText))
@@ -148,13 +148,17 @@ class diFireBot {
                 replyKeyboardMarkup.setResizeKeyboard(true);
                 replyKeyboardMarkup.setOneTimeKeyboard(true);
 
+                this.courseList.forEach(keyboardRow::add);
+                keyboard.add(keyboardRow);
+                replyKeyboardMarkup.setKeyboard(keyboard);
+
                 keyboard.clear();
                 keyboardRow.clear();
 
-//                this.courseList.forEach(keyboardRow::add);
-//                keyboard.add(keyboardRow);
-//                replyKeyboardMarkup.setKeyboard(keyboard);
-                return "Здравствуйте, на какой курс вы хотите записаться?";
+                return "Здравствуйте, на какой курс вы хотите записаться? \n" +
+                        "> SMM-больше, чем Инстаграм \n" +
+                        "> Курс мобильной фотографи";
+
             }
             switch (currentState) {
                 case START: {
