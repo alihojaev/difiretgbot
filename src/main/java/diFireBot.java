@@ -141,13 +141,6 @@ class diFireBot {
 
         private String handleAndGenerateResponseMessage(final String userChatId, final String consumeMessageText) {
             var currentState = userSessionMap.get(userChatId);
-            final var keyboard = new ArrayList<KeyboardRow>();
-            final var keyboardRow = new KeyboardRow();
-
-            replyKeyboardMarkup.setSelective(true);
-            replyKeyboardMarkup.setResizeKeyboard(true);
-            replyKeyboardMarkup.setOneTimeKeyboard(false);
-
             if (this.admins.contains(userChatId)) {
                 if (consumeMessageText.equals("/users")) {
                     return this.getUsers();
@@ -157,6 +150,13 @@ class diFireBot {
                 if(this.getUserChatIds().contains(userChatId)) {
                     return "Вы уже зарегестрированы";
                 }
+                final var keyboard = new ArrayList<KeyboardRow>();
+                final var keyboardRow = new KeyboardRow();
+
+                replyKeyboardMarkup.setSelective(true);
+                replyKeyboardMarkup.setResizeKeyboard(true);
+                replyKeyboardMarkup.setOneTimeKeyboard(false);
+
                 userSessionMap.put(userChatId, Steps.START);
                 this.courseList.forEach(keyboardRow::add);
                 keyboard.add(keyboardRow);
