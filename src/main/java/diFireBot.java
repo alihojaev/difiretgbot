@@ -181,7 +181,7 @@ class diFireBot {
                 }
                 case FULL_NAME: {
                     this.userSessionMap.remove(userChatId);
-//                    this.updateDbTemplate(userChatId, consumeMessageText, Steps.FULL_NAME);
+                    this.updateDbTemplate(userChatId, consumeMessageText, Steps.FULL_NAME);
                     this.admins.forEach(admin -> {
                         try {
                             this.execute(new SendMessage()
