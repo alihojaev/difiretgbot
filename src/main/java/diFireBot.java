@@ -146,7 +146,7 @@ class diFireBot {
             replyKeyboardMarkup.setResizeKeyboard(true);
             replyKeyboardMarkup.setOneTimeKeyboard(false);
 
-            if (admins.contains(userChatId)) {
+            if (this.admins.contains(userChatId)) {
                 if (consumeMessageText.equals("/users")) {
                     return this.getUsers();
                 }
@@ -156,16 +156,10 @@ class diFireBot {
                     return "Вы уже зарегестрированы";
                 }
                 userSessionMap.put(userChatId, Steps.START);
-
-
                 this.courseList.forEach(keyboardRow::add);
                 keyboard.add(keyboardRow);
                 replyKeyboardMarkup.setKeyboard(keyboard);
                 return "Здравствуйте, на какой курс вы хотите записаться?";
-            } else {
-                System.out.println("удалил я эти ебанные кнопки");
-                keyboard.clear();
-                keyboardRow.clear();
             }
             switch (currentState) {
                 case START: {
@@ -197,14 +191,16 @@ class diFireBot {
                 case FULL_NAME: {
                     this.updateDbTemplate(userChatId, consumeMessageText, Steps.FULL_NAME);
                     this.userSessionMap.remove(userChatId);
-                    try {
-                        this.execute(new SendMessage()
-                                .setChatId("186164861")
-                                .setText(this.getUsers()));
-                    } catch (TelegramApiException e) {
-                        e.printStackTrace();
-                        throw new RuntimeException("loh pidr");
-                    }
+                    this.admins.forEach(admin -> {
+                        try {
+                            this.execute(new SendMessage()
+                                    .setChatId(admin)
+                                    .setText(this.getUser(userChatId)));
+                        } catch (TelegramApiException e) {
+                            e.printStackTrace();
+                            throw new RuntimeException("loh pidr");
+                        }
+                    });
                     return "Вы зарегестрированы на курс";
                 }
                 default:
