@@ -140,7 +140,7 @@ class diFireBot {
             }
             if (consumeMessageText.equals("/start")) {
                 if(this.getUserChatIds().contains(userChatId)) {
-                    return "Вы уже зарегистрированы";
+                    return "Вы уже зарегестрированы";
                 }
                 userSessionMap.put(userChatId, Steps.START);
                 final var keyboard = new ArrayList<KeyboardRow>();
@@ -161,10 +161,9 @@ class diFireBot {
                         try {
                             final var keyboard = new ArrayList<KeyboardRow>();
                             final var keyboardRow = new KeyboardRow();
-                            replyKeyboardMarkup.setSelective(true);
-                            replyKeyboardMarkup.setResizeKeyboard(true);
+                            replyKeyboardMarkup.setSelective(false);
+                            replyKeyboardMarkup.setResizeKeyboard(false);
                             replyKeyboardMarkup.setOneTimeKeyboard(false);
-                            this.courseList.forEach(keyboardRow::add);
                             keyboard.add(keyboardRow);
                             replyKeyboardMarkup.setKeyboard(keyboard);
                             keyboard.clear();
@@ -229,7 +228,36 @@ class diFireBot {
                         responseMessage.append("\n");
                         responseMessage.append(data.course);
                         responseMessage.append("\n");
+                        responseMessage.append(data.registrationDate);
                         responseMessage.append("\n");
+                        responseMessage.append("\n");
+                    });
+            return responseMessage.toString();
+        }
+
+        private String getUser(String chatId) {
+            final var responseMessage = new StringBuilder();
+            Stream.of(Objects.requireNonNull(new File(Paths.FULL_DB_PATH).listFiles()))
+                    .map(file -> TelegramBotImpl.this.db.getFileData(file.toPath().toString()))
+                    .map(data -> {
+                        try {
+                            return TelegramBotImpl.this.objectMapper.readValue(data, DBTemplate.class);
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e.getMessage());
+                        }
+                    })
+                    .forEach(data -> {
+                        if (data.userChatId.equals(chatId)) {
+                            responseMessage.append(data.fullName);
+                            responseMessage.append("\n");
+                            responseMessage.append(data.phoneNumber);
+                            responseMessage.append("\n");
+                            responseMessage.append(data.course);
+                            responseMessage.append("\n");
+                            responseMessage.append(data.registrationDate);
+                            responseMessage.append("\n");
+                            responseMessage.append("\n");
+                        }
                     });
             return responseMessage.toString();
         }
@@ -250,6 +278,8 @@ class diFireBot {
                     dbTemplate.setFullName(data);
                 } else if (step == Steps.FULL_NAME) {
                     dbTemplate.setPhoneNumber(data);
+                    Date registrationDate = new Date();
+                    dbTemplate.setRegistrationDate(String.valueOf(registrationDate));
                 }
                 final var newDbTemplateString = this.objectMapper.writeValueAsString(dbTemplate);
                 this.db.updateFileData(new File(dbFilePath), newDbTemplateString);
@@ -318,6 +348,7 @@ class diFireBot {
         private String course;
         private String fullName;
         private String phoneNumber;
+        private String registrationDate;
 
         public DBTemplate() {
 
@@ -326,11 +357,13 @@ class diFireBot {
         public DBTemplate(final String userChatId,
                           final String course,
                           final String fullName,
-                          final String phoneNumber) {
+                          final String phoneNumber,
+                          final String registrationDate) {
             this.userChatId = userChatId;
             this.course = course;
             this.fullName = fullName;
             this.phoneNumber = phoneNumber;
+            this.registrationDate = registrationDate;
         }
 
         public String getUserChatId() {
@@ -349,6 +382,8 @@ class diFireBot {
             return phoneNumber;
         }
 
+        public String getRegistrationDate() { return registrationDate; }
+
         public void setUserChatId(String userChatId) {
             this.userChatId = userChatId;
         }
@@ -364,5 +399,7 @@ class diFireBot {
         public void setPhoneNumber(String phoneNumber) {
             this.phoneNumber = phoneNumber;
         }
+
+        public void setRegistrationDate(String registrationDate) { this.registrationDate = registrationDate; }
     }
 }
