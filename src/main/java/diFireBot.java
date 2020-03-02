@@ -1,5 +1,6 @@
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -65,8 +66,6 @@ class diFireBot {
 
         private final List<String> courseList;
 
-        private final List<String> admins;
-
         private final FileSystemDataBase db;
 
         private final ObjectMapper objectMapper;
@@ -74,7 +73,6 @@ class diFireBot {
         public TelegramBotImpl(final FileSystemDataBase db) {
             this.userSessionMap = new HashMap<>();
             this.courseList = this.getCourses();
-            this.admins = this.getAdmins();
             this.db = db;
             this.objectMapper = new ObjectMapper();
             this.init();
@@ -91,13 +89,6 @@ class diFireBot {
             return courses;
         }
 
-        private List<String> getAdmins() {
-            final List<String> administrators = new ArrayList<>();
-            administrators.add("186164861");
-            administrators.add("483858204");
-            return administrators;
-        }
-
         @Override
         public void onUpdateReceived(final Update update) {
             if (update != null) {
@@ -111,6 +102,7 @@ class diFireBot {
                             .setText(this.handleAndGenerateResponseMessage(userChatId, consumeMessageText))
                             .setReplyMarkup(this.replyKeyboardMarkup)
                             .enableMarkdown(true);
+
                 } else return;
                 try {
                     this.execute(sendMessage);
@@ -130,13 +122,13 @@ class diFireBot {
 
         private String handleAndGenerateResponseMessage(final String userChatId, final String consumeMessageText) {
             var currentState = userSessionMap.get(userChatId);
-            if (this.admins.contains(userChatId)) {
+            if (userChatId.equals("324535813")) {
                 if (consumeMessageText.equals("/users")) {
                     return this.getUsers();
                 }
             }
             if (consumeMessageText.equals("/start")) {
-                if (this.getUserChatIds().contains(userChatId)) {
+                if(this.getUserChatIds().contains(userChatId)) {
                     return "Вы уже зарегистрированы";
                 }
                 userSessionMap.put(userChatId, Steps.START);
@@ -145,7 +137,10 @@ class diFireBot {
 
                 replyKeyboardMarkup.setSelective(true);
                 replyKeyboardMarkup.setResizeKeyboard(true);
-                replyKeyboardMarkup.setOneTimeKeyboard(true);
+                replyKeyboardMarkup.setOneTimeKeyboard(false);
+
+                keyboard.clear();
+                keyboardRow.clear();
 
                 this.courseList.forEach(keyboardRow::add);
                 keyboard.add(keyboardRow);
@@ -173,7 +168,7 @@ class diFireBot {
                 case COURSE: {
                     final var fullName = consumeMessageText.split(" ");
                     if (fullName.length < 2) {
-                        return "Неверные данные";
+                        return "Ты чо быканул";
                     }
                     this.userSessionMap.put(userChatId, Steps.FULL_NAME);
                     this.updateDbTemplate(userChatId, consumeMessageText, Steps.COURSE);
@@ -182,16 +177,14 @@ class diFireBot {
                 case FULL_NAME: {
                     this.userSessionMap.remove(userChatId);
                     this.updateDbTemplate(userChatId, consumeMessageText, Steps.FULL_NAME);
-                    this.admins.forEach(admin -> {
-                        try {
-                            this.execute(new SendMessage()
-                                    .setChatId(admin)
-                                    .setText(this.getUser(userChatId)));
-                        } catch (TelegramApiException e) {
-                            e.printStackTrace();
-                            throw new RuntimeException("loh pidr");
-                        }
-                    });
+                    try {
+                        this.execute(new SendMessage()
+                                .setChatId("324535813")
+                                .setText(this.getUsers()));
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                        throw new RuntimeException("loh pidr");
+                    }
                     return "Вы зарегестрированы на курс";
                 }
                 default:
@@ -217,36 +210,7 @@ class diFireBot {
                         responseMessage.append("\n");
                         responseMessage.append(data.course);
                         responseMessage.append("\n");
-                        responseMessage.append(data.registrationDate);
                         responseMessage.append("\n");
-                        responseMessage.append("\n");
-                    });
-            return responseMessage.toString();
-        }
-
-        private String getUser(String chatId) {
-            final var responseMessage = new StringBuilder();
-            Stream.of(Objects.requireNonNull(new File(Paths.FULL_DB_PATH).listFiles()))
-                    .map(file -> TelegramBotImpl.this.db.getFileData(file.toPath().toString()))
-                    .map(data -> {
-                        try {
-                            return TelegramBotImpl.this.objectMapper.readValue(data, DBTemplate.class);
-                        } catch (JsonProcessingException e) {
-                            throw new RuntimeException(e.getMessage());
-                        }
-                    })
-                    .forEach(data -> {
-                        if (data.userChatId.equals(chatId)) {
-                            responseMessage.append(data.fullName);
-                            responseMessage.append("\n");
-                            responseMessage.append(data.phoneNumber);
-                            responseMessage.append("\n");
-                            responseMessage.append(data.course);
-                            responseMessage.append("\n");
-                            responseMessage.append(data.registrationDate);
-                            responseMessage.append("\n");
-                            responseMessage.append("\n");
-                        }
                     });
             return responseMessage.toString();
         }
@@ -266,9 +230,7 @@ class diFireBot {
                 if (step == Steps.COURSE) {
                     dbTemplate.setFullName(data);
                 } else if (step == Steps.FULL_NAME) {
-                    Date date = new Date();
                     dbTemplate.setPhoneNumber(data);
-                    dbTemplate.setRegistrationDate(date.toString());
                 }
                 final var newDbTemplateString = this.objectMapper.writeValueAsString(dbTemplate);
                 this.db.updateFileData(new File(dbFilePath), newDbTemplateString);
@@ -328,7 +290,7 @@ class diFireBot {
     }
 
     private static class Paths {
-        private static final String FULL_DB_PATH = "/home/ali/difire";
+        private static final String FULL_DB_PATH = "/home/anvar/difire";
         private static final String DB_PATH = "/difire";
     }
 
@@ -337,7 +299,6 @@ class diFireBot {
         private String course;
         private String fullName;
         private String phoneNumber;
-        private String registrationDate;
 
         public DBTemplate() {
 
@@ -346,13 +307,11 @@ class diFireBot {
         public DBTemplate(final String userChatId,
                           final String course,
                           final String fullName,
-                          final String phoneNumber,
-                          final String registrationDate) {
+                          final String phoneNumber) {
             this.userChatId = userChatId;
             this.course = course;
             this.fullName = fullName;
             this.phoneNumber = phoneNumber;
-            this.registrationDate = registrationDate;
         }
 
         public String getUserChatId() {
@@ -371,10 +330,6 @@ class diFireBot {
             return phoneNumber;
         }
 
-        public String getRegistrationDate() {
-            return registrationDate;
-        }
-
         public void setUserChatId(String userChatId) {
             this.userChatId = userChatId;
         }
@@ -389,10 +344,6 @@ class diFireBot {
 
         public void setPhoneNumber(String phoneNumber) {
             this.phoneNumber = phoneNumber;
-        }
-
-        public void setRegistrationDate(String registrationDate) {
-            this.registrationDate = registrationDate;
         }
     }
 }
