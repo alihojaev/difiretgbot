@@ -162,6 +162,7 @@ class diFireBot {
                     if (this.courseList.contains(consumeMessageText)) {
                         try {
                             this.userSessionMap.put(userChatId, Steps.COURSE);
+                            new SendMessage().setReplyMarkup(new ReplyKeyboardMarkup());
                             final var dbTemplate = new DBTemplate();
                             dbTemplate.setUserChatId(userChatId);
                             dbTemplate.setCourse(consumeMessageText);
