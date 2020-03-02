@@ -44,15 +44,6 @@ class diFireBot {
         try (final var serverSocket = new ServerSocket(8089)) {
             while (isApplicationRun) {
                 try (final var clientSocket = serverSocket.accept()) {
-//                    try (final var clientDataInputStream = clientSocket.getInputStream()) {
-//                        var dataBufferedReader =
-//                                new BufferedReader(
-//                                        new InputStreamReader(clientDataInputStream));
-//                        final var data = dataBufferedReader.readLine();
-//                        if (data != null && data.equals("disable")) {
-//                            isApplicationRun = false;
-//                        }
-//                    }
                     final var writer =
                             new BufferedWriter(
                                     new OutputStreamWriter(clientSocket.getOutputStream()));
@@ -74,6 +65,8 @@ class diFireBot {
 
         private final List<String> courseList;
 
+        private final List<String> admins;
+
         private final FileSystemDataBase db;
 
         private final ObjectMapper objectMapper;
@@ -81,6 +74,7 @@ class diFireBot {
         public TelegramBotImpl(final FileSystemDataBase db) {
             this.userSessionMap = new HashMap<>();
             this.courseList = this.getCourses();
+            this.admins = this.getAdmins();
             this.db = db;
             this.objectMapper = new ObjectMapper();
             this.init();
@@ -95,6 +89,11 @@ class diFireBot {
             courses.add("SMM-больше, чем Инстаграм");
             courses.add("Курс мобильной фотографии");
             return courses;
+        }
+        private List<String> getAdmins() {
+            final List<String> administrators = new ArrayList<>();
+            administrators.add("186164861");
+            return administrators;
         }
 
         @Override
@@ -130,7 +129,7 @@ class diFireBot {
 
         private String handleAndGenerateResponseMessage(final String userChatId, final String consumeMessageText) {
             var currentState = userSessionMap.get(userChatId);
-            if (userChatId.equals("324535813")) {
+            if (this.admins.contains(userChatId)) {
                 if (consumeMessageText.equals("/users")) {
                     return this.getUsers();
                 }
@@ -185,14 +184,16 @@ class diFireBot {
                 case FULL_NAME: {
                     this.userSessionMap.remove(userChatId);
                     this.updateDbTemplate(userChatId, consumeMessageText, Steps.FULL_NAME);
-                    try {
-                        this.execute(new SendMessage()
-                                .setChatId("324535813")
-                                .setText(this.getUsers()));
-                    } catch (TelegramApiException e) {
-                        e.printStackTrace();
-                        throw new RuntimeException("loh pidr");
-                    }
+                    this.admins.forEach(admin -> {
+                        try {
+                            this.execute(new SendMessage()
+                                    .setChatId(admin)
+                                    .setText(this.getUser(userChatId)));
+                        } catch (TelegramApiException e) {
+                            e.printStackTrace();
+                            throw new RuntimeException("loh pidr");
+                        }
+                    });
                     return "Вы зарегестрированы на курс";
                 }
                 default:
@@ -212,13 +213,42 @@ class diFireBot {
                         }
                     })
                     .forEach(data -> {
-                        responseMessage.append(data.fullName);
-                        responseMessage.append("\n");
-                        responseMessage.append(data.phoneNumber);
-                        responseMessage.append("\n");
-                        responseMessage.append(data.course);
-                        responseMessage.append("\n");
-                        responseMessage.append("\n");
+                            responseMessage.append(data.fullName);
+                            responseMessage.append("\n");
+                            responseMessage.append(data.phoneNumber);
+                            responseMessage.append("\n");
+                            responseMessage.append(data.course);
+                            responseMessage.append("\n");
+                            responseMessage.append(data.registrationDate);
+                            responseMessage.append("\n");
+                            responseMessage.append("\n");
+                    });
+            return responseMessage.toString();
+        }
+
+        private String getUser(String chatId) {
+            final var responseMessage = new StringBuilder();
+            Stream.of(Objects.requireNonNull(new File(Paths.FULL_DB_PATH).listFiles()))
+                    .map(file -> TelegramBotImpl.this.db.getFileData(file.toPath().toString()))
+                    .map(data -> {
+                        try {
+                            return TelegramBotImpl.this.objectMapper.readValue(data, DBTemplate.class);
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e.getMessage());
+                        }
+                    })
+                    .forEach(data -> {
+                        if (data.userChatId.equals(chatId)) {
+                            responseMessage.append(data.fullName);
+                            responseMessage.append("\n");
+                            responseMessage.append(data.phoneNumber);
+                            responseMessage.append("\n");
+                            responseMessage.append(data.course);
+                            responseMessage.append("\n");
+                            responseMessage.append(data.registrationDate);
+                            responseMessage.append("\n");
+                            responseMessage.append("\n");
+                        }
                     });
             return responseMessage.toString();
         }
@@ -238,7 +268,9 @@ class diFireBot {
                 if (step == Steps.COURSE) {
                     dbTemplate.setFullName(data);
                 } else if (step == Steps.FULL_NAME) {
+                    Date date = new Date();
                     dbTemplate.setPhoneNumber(data);
+                    dbTemplate.setRegistrationDate(date.toString());
                 }
                 final var newDbTemplateString = this.objectMapper.writeValueAsString(dbTemplate);
                 this.db.updateFileData(new File(dbFilePath), newDbTemplateString);
@@ -307,6 +339,7 @@ class diFireBot {
         private String course;
         private String fullName;
         private String phoneNumber;
+        private String registrationDate;
 
         public DBTemplate() {
 
@@ -315,11 +348,13 @@ class diFireBot {
         public DBTemplate(final String userChatId,
                           final String course,
                           final String fullName,
-                          final String phoneNumber) {
+                          final String phoneNumber,
+                          final String registrationDate) {
             this.userChatId = userChatId;
             this.course = course;
             this.fullName = fullName;
             this.phoneNumber = phoneNumber;
+            this.registrationDate = registrationDate;
         }
 
         public String getUserChatId() {
@@ -338,6 +373,8 @@ class diFireBot {
             return phoneNumber;
         }
 
+        public String getRegistrationDate() {return  registrationDate; }
+
         public void setUserChatId(String userChatId) {
             this.userChatId = userChatId;
         }
@@ -353,5 +390,7 @@ class diFireBot {
         public void setPhoneNumber(String phoneNumber) {
             this.phoneNumber = phoneNumber;
         }
+
+        public void setRegistrationDate(String registrationDate) {this.registrationDate = registrationDate; }
     }
 }
