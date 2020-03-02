@@ -186,7 +186,6 @@ class diFireBot {
                     return "Введите номер телефона";
                 }
                 case FULL_NAME: {
-                    this.userSessionMap.remove(userChatId);
                     this.updateDbTemplate(userChatId, consumeMessageText, Steps.FINISH);
                     this.admins.forEach(admin -> {
                         try {
@@ -198,6 +197,7 @@ class diFireBot {
                             throw new RuntimeException("loh pidr");
                         }
                     });
+                    this.userSessionMap.remove(userChatId);
                     return "Вы зарегестрированы на курс";
                 }
                 case FINISH: {
