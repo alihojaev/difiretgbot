@@ -290,7 +290,7 @@ class diFireBot {
     }
 
     private static class Paths {
-        private static final String FULL_DB_PATH = "/home/anvar/difire";
+        private static final String FULL_DB_PATH = "/home/ali/difire";
         private static final String DB_PATH = "/difire";
     }
 
