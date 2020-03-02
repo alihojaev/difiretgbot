@@ -162,8 +162,6 @@ class diFireBot {
                     if (this.courseList.contains(consumeMessageText)) {
                         try {
                             this.userSessionMap.put(userChatId, Steps.COURSE);
-                            keyboard.clear();
-                            keyboardRow.clear();
                             final var dbTemplate = new DBTemplate();
                             dbTemplate.setUserChatId(userChatId);
                             dbTemplate.setCourse(consumeMessageText);
@@ -188,7 +186,7 @@ class diFireBot {
                 }
                 case FULL_NAME: {
                     this.userSessionMap.remove(userChatId);
-//                    this.updateDbTemplate(userChatId, consumeMessageText, Steps.FULL_NAME);
+                    this.updateDbTemplate(userChatId, consumeMessageText, Steps.FINISH);
                     this.admins.forEach(admin -> {
                         try {
                             this.execute(new SendMessage()
@@ -200,6 +198,9 @@ class diFireBot {
                         }
                     });
                     return "Вы зарегестрированы на курс";
+                }
+                case FINISH: {
+                    return "Вы уже зарегестрированы на курс";
                 }
                 default:
                     throw new RuntimeException("Trouble, ..... big trouble");
@@ -331,7 +332,7 @@ class diFireBot {
     }
 
     private enum Steps {
-        START, COURSE, FULL_NAME
+        START, COURSE, FULL_NAME, FINISH
     }
 
     private static class Paths {
