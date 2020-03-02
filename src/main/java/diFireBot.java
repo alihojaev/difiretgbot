@@ -121,6 +121,8 @@ class diFireBot {
 
                 } else return;
 
+                System.out.println(userChatId + " " + update.getMessage().getText() + " " + sendMessage);
+
                 try {
                     this.execute(sendMessage);
                 } catch (TelegramApiException e) {
