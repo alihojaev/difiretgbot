@@ -6,6 +6,7 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
@@ -150,9 +151,9 @@ class diFireBot {
                 keyboard.clear();
                 keyboardRow.clear();
 
-                this.courseList.forEach(keyboardRow::add);
-                keyboard.add(keyboardRow);
-                replyKeyboardMarkup.setKeyboard(keyboard);
+//                this.courseList.forEach(keyboardRow::add);
+//                keyboard.add(keyboardRow);
+//                replyKeyboardMarkup.setKeyboard(keyboard);
                 return "Здравствуйте, на какой курс вы хотите записаться?";
             }
             switch (currentState) {
@@ -160,7 +161,6 @@ class diFireBot {
                     if (this.courseList.contains(consumeMessageText)) {
                         try {
                             this.userSessionMap.put(userChatId, Steps.COURSE);
-                            replyKeyboardMarkup.setKeyboard(null);
                             final var dbTemplate = new DBTemplate();
                             dbTemplate.setUserChatId(userChatId);
                             dbTemplate.setCourse(consumeMessageText);
