@@ -1,6 +1,7 @@
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.A;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -66,6 +67,8 @@ class diFireBot {
 
         private final List<String> courseList;
 
+        private final List<String> admins;
+
         private final FileSystemDataBase db;
 
         private final ObjectMapper objectMapper;
@@ -73,6 +76,7 @@ class diFireBot {
         public TelegramBotImpl(final FileSystemDataBase db) {
             this.userSessionMap = new HashMap<>();
             this.courseList = this.getCourses();
+            this.admins = this.getAdmins();
             this.db = db;
             this.objectMapper = new ObjectMapper();
             this.init();
@@ -87,6 +91,13 @@ class diFireBot {
             courses.add("SMM-больше, чем Инстаграм");
             courses.add("Курс мобильной фотографии");
             return courses;
+        }
+
+        private List<String> getAdmins() {
+            final List<String> admin = new ArrayList<>();
+            admin.add("186164861");
+            admin.add("483858204");
+            return admin;
         }
 
         @Override
@@ -122,7 +133,7 @@ class diFireBot {
 
         private String handleAndGenerateResponseMessage(final String userChatId, final String consumeMessageText) {
             var currentState = userSessionMap.get(userChatId);
-            if (userChatId.equals("324535813")) {
+            if (admins.contains(userChatId)) {
                 if (consumeMessageText.equals("/users")) {
                     return this.getUsers();
                 }
@@ -139,9 +150,6 @@ class diFireBot {
                 replyKeyboardMarkup.setResizeKeyboard(true);
                 replyKeyboardMarkup.setOneTimeKeyboard(false);
 
-                keyboard.clear();
-                keyboardRow.clear();
-
                 this.courseList.forEach(keyboardRow::add);
                 keyboard.add(keyboardRow);
                 replyKeyboardMarkup.setKeyboard(keyboard);
@@ -151,6 +159,17 @@ class diFireBot {
                 case START: {
                     if (this.courseList.contains(consumeMessageText)) {
                         try {
+                            final var keyboard = new ArrayList<KeyboardRow>();
+                            final var keyboardRow = new KeyboardRow();
+                            replyKeyboardMarkup.setSelective(true);
+                            replyKeyboardMarkup.setResizeKeyboard(true);
+                            replyKeyboardMarkup.setOneTimeKeyboard(false);
+                            this.courseList.forEach(keyboardRow::add);
+                            keyboard.add(keyboardRow);
+                            replyKeyboardMarkup.setKeyboard(keyboard);
+                            keyboard.clear();
+                            keyboardRow.clear();
+
                             this.userSessionMap.put(userChatId, Steps.COURSE);
                             final var dbTemplate = new DBTemplate();
                             dbTemplate.setUserChatId(userChatId);
@@ -175,16 +194,18 @@ class diFireBot {
                     return "Введите номер телефона";
                 }
                 case FULL_NAME: {
-                    this.userSessionMap.remove(userChatId);
                     this.updateDbTemplate(userChatId, consumeMessageText, Steps.FULL_NAME);
-                    try {
-                        this.execute(new SendMessage()
-                                .setChatId("324535813")
-                                .setText(this.getUsers()));
-                    } catch (TelegramApiException e) {
-                        e.printStackTrace();
-                        throw new RuntimeException("loh pidr");
-                    }
+                    this.userSessionMap.remove(userChatId);
+                    admins.forEach(admins -> {
+                        try {
+                            this.execute(new SendMessage()
+                                    .setChatId(admins)
+                                    .setText(this.getUsers()));
+                        } catch (TelegramApiException e) {
+                            e.printStackTrace();
+                            throw new RuntimeException("loh pidr");
+                        }
+                    });
                     return "Вы зарегестрированы на курс";
                 }
                 default:
