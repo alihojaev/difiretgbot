@@ -90,6 +90,7 @@ class diFireBot {
             courses.add("Курс мобильной фотографии");
             return courses;
         }
+
         private List<String> getAdmins() {
             final List<String> administrators = new ArrayList<>();
             administrators.add("186164861");
@@ -134,73 +135,71 @@ class diFireBot {
                     return this.getUsers();
                 }
             }
-            if(this.getUserChatIds().contains(userChatId)) {
-                return "Вы уже зарегистрированы";
-            } else {
-                if (consumeMessageText.equals("/start")) {
-                    userSessionMap.put(userChatId, Steps.START);
-                    final var keyboard = new ArrayList<KeyboardRow>();
-                    final var keyboardRow = new KeyboardRow();
-
-                    replyKeyboardMarkup.setSelective(true);
-                    replyKeyboardMarkup.setResizeKeyboard(true);
-                    replyKeyboardMarkup.setOneTimeKeyboard(true);
-
-                    keyboard.clear();
-                    keyboardRow.clear();
-
-                    this.courseList.forEach(keyboardRow::add);
-                    keyboard.add(keyboardRow);
-                    replyKeyboardMarkup.setKeyboard(keyboard);
-                    return "Здравствуйте, на какой курс вы хотите записаться?";
+            if (consumeMessageText.equals("/start")) {
+                if (this.getUserChatIds().contains(userChatId)) {
+                    return "Вы уже зарегистрированы";
                 }
-                switch (currentState) {
-                    case START: {
-                        if (this.courseList.contains(consumeMessageText)) {
-                            try {
-                                this.userSessionMap.put(userChatId, Steps.COURSE);
-                                replyKeyboardMarkup.setSelective(false);
-                                replyKeyboardMarkup.setResizeKeyboard(false);
-                                final var dbTemplate = new DBTemplate();
-                                dbTemplate.setUserChatId(userChatId);
-                                dbTemplate.setCourse(consumeMessageText);
-                                final var dbTemplateString = this.objectMapper.writeValueAsString(dbTemplate);
-                                db.createNewFileWidthData(dbTemplateString, Paths.FULL_DB_PATH + "/" + userChatId);
-                                return "Введите Ф.И.О.";
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                                throw new RuntimeException("Trouble width serialization");
-                            }
+                userSessionMap.put(userChatId, Steps.START);
+                final var keyboard = new ArrayList<KeyboardRow>();
+                final var keyboardRow = new KeyboardRow();
 
+                replyKeyboardMarkup.setSelective(true);
+                replyKeyboardMarkup.setResizeKeyboard(true);
+                replyKeyboardMarkup.setOneTimeKeyboard(true);
+
+                keyboard.clear();
+                keyboardRow.clear();
+
+                this.courseList.forEach(keyboardRow::add);
+                keyboard.add(keyboardRow);
+                replyKeyboardMarkup.setKeyboard(keyboard);
+                return "Здравствуйте, на какой курс вы хотите записаться?";
+            }
+            switch (currentState) {
+                case START: {
+                    if (this.courseList.contains(consumeMessageText)) {
+                        try {
+                            this.userSessionMap.put(userChatId, Steps.COURSE);
+                            replyKeyboardMarkup.setKeyboard(null);
+                            final var dbTemplate = new DBTemplate();
+                            dbTemplate.setUserChatId(userChatId);
+                            dbTemplate.setCourse(consumeMessageText);
+                            final var dbTemplateString = this.objectMapper.writeValueAsString(dbTemplate);
+                            db.createNewFileWidthData(dbTemplateString, Paths.FULL_DB_PATH + "/" + userChatId);
+                            return "Введите Ф.И.О.";
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            throw new RuntimeException("Trouble width serialization");
                         }
+
                     }
-                    case COURSE: {
-                        final var fullName = consumeMessageText.split(" ");
-                        if (fullName.length < 2) {
-                            return "Неверные данные";
-                        }
-                        this.userSessionMap.put(userChatId, Steps.FULL_NAME);
-                        this.updateDbTemplate(userChatId, consumeMessageText, Steps.COURSE);
-                        return "Введите номер телефона";
-                    }
-                    case FULL_NAME: {
-                        this.userSessionMap.remove(userChatId);
-                        this.updateDbTemplate(userChatId, consumeMessageText, Steps.FULL_NAME);
-                        this.admins.forEach(admin -> {
-                            try {
-                                this.execute(new SendMessage()
-                                        .setChatId(admin)
-                                        .setText(this.getUser(userChatId)));
-                            } catch (TelegramApiException e) {
-                                e.printStackTrace();
-                                throw new RuntimeException("loh pidr");
-                            }
-                        });
-                        return "Вы зарегестрированы на курс";
-                    }
-                    default:
-                        throw new RuntimeException("Trouble, ..... big trouble");
                 }
+                case COURSE: {
+                    final var fullName = consumeMessageText.split(" ");
+                    if (fullName.length < 2) {
+                        return "Неверные данные";
+                    }
+                    this.userSessionMap.put(userChatId, Steps.FULL_NAME);
+                    this.updateDbTemplate(userChatId, consumeMessageText, Steps.COURSE);
+                    return "Введите номер телефона";
+                }
+                case FULL_NAME: {
+                    this.userSessionMap.remove(userChatId);
+//                    this.updateDbTemplate(userChatId, consumeMessageText, Steps.FULL_NAME);
+                    this.admins.forEach(admin -> {
+                        try {
+                            this.execute(new SendMessage()
+                                    .setChatId(admin)
+                                    .setText(this.getUser(userChatId)));
+                        } catch (TelegramApiException e) {
+                            e.printStackTrace();
+                            throw new RuntimeException("loh pidr");
+                        }
+                    });
+                    return "Вы зарегестрированы на курс";
+                }
+                default:
+                    throw new RuntimeException("Trouble, ..... big trouble");
             }
         }
 
@@ -216,15 +215,15 @@ class diFireBot {
                         }
                     })
                     .forEach(data -> {
-                            responseMessage.append(data.fullName);
-                            responseMessage.append("\n");
-                            responseMessage.append(data.phoneNumber);
-                            responseMessage.append("\n");
-                            responseMessage.append(data.course);
-                            responseMessage.append("\n");
-                            responseMessage.append(data.registrationDate);
-                            responseMessage.append("\n");
-                            responseMessage.append("\n");
+                        responseMessage.append(data.fullName);
+                        responseMessage.append("\n");
+                        responseMessage.append(data.phoneNumber);
+                        responseMessage.append("\n");
+                        responseMessage.append(data.course);
+                        responseMessage.append("\n");
+                        responseMessage.append(data.registrationDate);
+                        responseMessage.append("\n");
+                        responseMessage.append("\n");
                     });
             return responseMessage.toString();
         }
@@ -376,7 +375,9 @@ class diFireBot {
             return phoneNumber;
         }
 
-        public String getRegistrationDate() {return  registrationDate; }
+        public String getRegistrationDate() {
+            return registrationDate;
+        }
 
         public void setUserChatId(String userChatId) {
             this.userChatId = userChatId;
@@ -394,6 +395,8 @@ class diFireBot {
             this.phoneNumber = phoneNumber;
         }
 
-        public void setRegistrationDate(String registrationDate) {this.registrationDate = registrationDate; }
+        public void setRegistrationDate(String registrationDate) {
+            this.registrationDate = registrationDate;
+        }
     }
 }
