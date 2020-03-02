@@ -107,6 +107,9 @@ class diFireBot {
                 final var consumeMessageText = consumeMessage.getText();
                 final var userChatId = consumeMessage.getChatId().toString();
                 SendMessage sendMessage = null;
+
+                System.out.println(update);
+
                 if (this.courseList.contains(consumeMessageText) || !consumeMessageText.isEmpty()) {
                     sendMessage = new SendMessage()
                             .setChatId(userChatId)
@@ -115,6 +118,7 @@ class diFireBot {
                             .enableMarkdown(true);
 
                 } else return;
+
                 try {
                     this.execute(sendMessage);
                 } catch (TelegramApiException e) {
